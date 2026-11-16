@@ -1,0 +1,149 @@
+% ---------- Sparse probability maps ----------
+
+@inproceedings{martins2016softmax,
+  title     = {From Softmax to Sparsemax: A Sparse Model of Attention and Multi-Label Classification},
+  author    = {Martins, Andr{\'e} F. T. and Astudillo, Ram{\'o}n Fernandez},
+  booktitle = {Proceedings of the 33rd International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {48},
+  pages     = {1614--1623},
+  year      = {2016},
+  url       = {http://proceedings.mlr.press/v48/martins16.html}
+}
+
+@inproceedings{niculae2017regularized,
+  title     = {A Regularized Framework for Sparse and Structured Neural Attention},
+  author    = {Niculae, Vlad and Blondel, Mathieu},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2017}
+}
+
+@inproceedings{peters2019sparse,
+  title     = {Sparse Sequence-to-Sequence Models},
+  author    = {Peters, Ben and Niculae, Vlad and Martins, Andr{\'e} F. T.},
+  booktitle = {Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics (ACL)},
+  pages     = {1504--1519},
+  year      = {2019},
+  doi       = {10.18653/v1/P19-1146},
+  url       = {https://aclanthology.org/P19-1146}
+}
+
+% ---------- Fenchel-Young losses ----------
+
+@inproceedings{blondel2019fenchelyoung,
+  title     = {Learning Classifiers with {Fenchel-Young} Losses: Generalized Entropies, Margins, and Algorithms},
+  author    = {Blondel, Mathieu and Martins, Andr{\'e} F. T. and Niculae, Vlad},
+  booktitle = {Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {89},
+  pages     = {606--615},
+  year      = {2019},
+  url       = {https://proceedings.mlr.press/v89/blondel19a.html}
+}
+
+@article{blondel2020learning,
+  title   = {Learning with {Fenchel-Young} Losses},
+  author  = {Blondel, Mathieu and Martins, Andr{\'e} F. T. and Niculae, Vlad},
+  journal = {Journal of Machine Learning Research},
+  volume  = {21},
+  number  = {35},
+  pages   = {1--69},
+  year    = {2020}
+}
+
+% ---------- Entmax attention ----------
+
+@inproceedings{correia2019adaptively,
+  title     = {Adaptively Sparse Transformers},
+  author    = {Correia, Gon{\c{c}}alo M. and Niculae, Vlad and Martins, Andr{\'e} F. T.},
+  booktitle = {Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)},
+  pages     = {2174--2184},
+  year      = {2019},
+  doi       = {10.18653/v1/D19-1223},
+  url       = {https://aclanthology.org/D19-1223/}
+}
+
+@inproceedings{vasylenko2026longcontext,
+  title     = {Long-Context Generalization with Sparse Attention},
+  author    = {Vasylenko, Pavlo and Pitorro, Hugo and Martins, Andr{\'e} F. T. and Treviso, Marcos V.},
+  booktitle = {The Fourteenth International Conference on Learning Representations (ICLR)},
+  year      = {2026},
+  url       = {https://openreview.net/forum?id=PsB6Lynznk}
+}
+
+% ---------- Efficient kernels ----------
+
+@inproceedings{goncalves2025adasplash,
+  title     = {{AdaSplash}: Adaptive Sparse Flash Attention},
+  author    = {Gon{\c{c}}alves, Nuno and Treviso, Marcos V. and Martins, Andr{\'e} F. T.},
+  booktitle = {Forty-second International Conference on Machine Learning (ICML)},
+  year      = {2025},
+  url       = {https://openreview.net/forum?id=OWIPDWhUcO}
+}
+
+@inproceedings{goncalves2026adasplash2,
+  title     = {{AdaSplash-2}: Faster Differentiable Sparse Attention},
+  author    = {Gon{\c{c}}alves, Nuno and Pitorro, Hugo and Niculae, Vlad and Ponti, Edoardo and Li, Lei and Martins, Andr{\'e} F. T. and Treviso, Marcos V.},
+  booktitle = {Forty-third International Conference on Machine Learning (ICML)},
+  year      = {2026},
+  url       = {https://openreview.net/forum?id=7qpvff2gWI}
+}
+
+@inproceedings{dao2022flashattention,
+  title     = {{FlashAttention}: Fast and Memory-Efficient Exact Attention with {IO}-Awareness},
+  author    = {Dao, Tri and Fu, Daniel Y. and Ermon, Stefano and Rudra, Atri and R{\'e}, Christopher},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2022}
+}
+
+@misc{dao2023flashdecoding,
+  title        = {Flash-Decoding for Long-Context Inference},
+  author       = {Dao, Tri and Haziza, Daniel and Massa, Francisco and Sizov, Grigory},
+  howpublished = {Stanford CRFM Blog},
+  year         = {2023},
+  url          = {https://crfm.stanford.edu/2023/10/12/flashdecoding.html}
+}
+
+% ---------- KV-cache compression and selection ----------
+
+@inproceedings{zhang2023h2o,
+  title     = {{H$_2$O}: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models},
+  author    = {Zhang, Zhenyu and Sheng, Ying and Zhou, Tianyi and Chen, Tianlong and Zheng, Lianmin and Cai, Ruisi and Song, Zhao and Tian, Yuandong and R{\'e}, Christopher and Barrett, Clark and Wang, Zhangyang and Chen, Beidi},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2023}
+}
+
+@inproceedings{li2024snapkv,
+  title     = {{SnapKV}: {LLM} Knows What You Are Looking for Before Generation},
+  author    = {Li, Yuhong and Huang, Yingbing and Yang, Bowen and Venkitesh, Bharat and Locatelli, Acyr and Ye, Hanchen and Cai, Tianle and Lewis, Patrick and Chen, Deming},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {37},
+  pages     = {22947--22970},
+  year      = {2024}
+}
+
+@inproceedings{tang2024quest,
+  title     = {{Quest}: Query-Aware Sparsity for Efficient Long-Context {LLM} Inference},
+  author    = {Tang, Jiaming and Zhao, Yilong and Zhu, Kan and Xiao, Guangxuan and Kasikci, Baris and Han, Song},
+  booktitle = {Forty-first International Conference on Machine Learning (ICML)},
+  year      = {2024},
+  url       = {https://openreview.net/forum?id=KzACYw0MTV}
+}
+
+@inproceedings{lin2025twilight,
+  title     = {Twilight: Adaptive Attention Sparsity with Hierarchical Top-$p$ Pruning},
+  author    = {Lin, Chaofan and Tang, Jiaming and Yang, Shuo and Wang, Hanshuo and Tang, Tian and Tian, Boyu and Stoica, Ion and Han, Song and Gao, Mingyu},
+  booktitle = {The Thirty-ninth Annual Conference on Neural Information Processing Systems (NeurIPS)},
+  year      = {2025},
+  url       = {https://openreview.net/forum?id=Ve693NkzcU}
+}
+
+% ---------- Benchmarks ----------
+
+@article{hsieh2024ruler,
+  title   = {{RULER}: What's the Real Context Size of Your Long-Context Language Models?},
+  author  = {Hsieh, Cheng-Ping and Sun, Simeng and Kriman, Samuel and Acharya, Shantanu and Rekesh, Dima and Jia, Fei and Zhang, Yang and Ginsburg, Boris},
+  journal = {arXiv preprint arXiv:2404.06654},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2404.06654}
+}
