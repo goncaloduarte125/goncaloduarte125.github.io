@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: <a href='#'>Affiliations</a>. Address. Contacts. Motto. Etc.
+subtitle: MSc Student in Applied Maths@IST · ML Research · ex-Amazon SDE
 
 profile:
   align: right
@@ -23,8 +23,12 @@ latest_posts:
   limit: 3 # leave blank to include all the blog posts
 ---
 
-Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](https://www.reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
+I'm a Master's student in Applied Mathematics and Computation at Instituto Superior Técnico in Lisbon.
 
-Put your address / P.O. box / other info right below your picture. You can also disable any of these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
+My research is on sparse attention and efficient long-context inference. My first-author paper, EntmaxKV, was accepted at the Long Context Foundation Models workshop at NeurIPS 2026, with more on the way.
 
-Link to your social media connections, too. This theme is set up to use [Font Awesome icons](https://fontawesome.com/) and [Academicons](https://jpswalsh.github.io/academicons/), like the ones below. Add your Facebook, Twitter, LinkedIn, Google Scholar, or just disable all of them.
+My background is in probability and statistics (probability theory, stochastic processes, linear models). Through research I became increasingly interested in optimization, and took PhD-level Nonlinear Optimization and Numerical Functional Analysis and Optimization.
+
+Beyond ML, I'm interested in quantitative finance and scientific applications of machine learning.
+
+Before research, I spent just over two years as a Software Development Engineer at Amazon in Madrid, building distributed systems at scale.
