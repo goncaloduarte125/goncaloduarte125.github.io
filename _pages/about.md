@@ -25,10 +25,8 @@ latest_posts:
 
 I'm a Master's student in Applied Mathematics and Computation at Instituto Superior Técnico in Lisbon.
 
-My research is on sparse attention and efficient long-context inference. My first-author paper, EntmaxKV, was accepted at the Long Context Foundation Models workshop at NeurIPS 2026, with more on the way.
+My research focus on sparse attention and efficient long-context inference. My first-author paper, EntmaxKV, was accepted at the Long Context Foundation Models workshop at NeurIPS 2026, and there's more on the way.
 
-My background is in probability and statistics (probability theory, stochastic processes, linear models). Through research I became increasingly interested in optimization, and took PhD-level Nonlinear Optimization and Numerical Functional Analysis and Optimization.
+My background is in probability and statistics (probability theory, stochastic processes, linear models). Through research I became increasingly interested in optimization, and took Non Linear Optimization (PhD) and Numerical Functional Analysis and Optimization.
 
-Beyond ML, I'm interested in quantitative finance and scientific applications of machine learning.
-
-Before research, I spent just over two years as a Software Development Engineer at Amazon in Madrid, building distributed systems at scale.
+Beyond ML, I'm interested in quantitative finance and scientific applications of machine learning and before this I spent just over two years as a Software Development Engineer at Amazon in Madrid, building distributed systems at scale.
