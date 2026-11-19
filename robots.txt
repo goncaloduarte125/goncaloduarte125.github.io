@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://goncaloduarte125.github.io/sitemap.xml
