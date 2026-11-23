@@ -17,7 +17,7 @@ toc:
   - name: Agents and training
   - name: Baseline agents
   - name: A first comparison
-  - name: Which actions survive?
+  - name: Sparsity in action
   - name: How much does a colder softmax buy?
   - name: What happens at the same table?
   - name: Teaching the agent to leave a dollar alone
@@ -33,11 +33,13 @@ toc:
 
 ## Learning what not to do
 
+Figgie is a card game created by Jane Street to teach trading fundamentals, with an emphasis on negotiation. Traders need to balance trading hedge with acceptance probability and come up with trades that benefit both the buyer and the seller. A generous bid trades immediately but gives away value. Learning to trade means balancing price, chance of acceptance, inventory, time and information.
+
 Imagine deciding whether to buy a card. You could offer a low price, improve an existing bid, accept someone else's offer, sell something else, or wait. Now give each possible quote dozens of price points. The list of actions grows quickly, even though only a few make sense at any moment.
 
 A policy has to spread its probability over that list. Softmax gives every legal action some chance of being chosen. Sparse policies let the agent rule actions out completely. 
 
-We tested this approach in Figgie, a trading game created by Jane Street that combines incomplete information and negotiation. In this game an action does more than change your holdings. It can also tell your opponents something about what you know. A policy that filters out bad trades might learn faster and perform better while also being easier to read.
+In Figgie an action does more than change your holdings. It can also tell your opponents something about what you hand and your strategy. A policy that filters out bad trades might learn faster and perform better while also being easier to read.
 
 ## A small market with a hidden payoff
 
@@ -59,7 +61,6 @@ The bonus makes card values depend on inventory, the same hand can pay different
 
 A game lasts **240 ticks**. On each tick every player picks one action, and actions resolve in a seat order drawn at the start of the game. A player can keep one bid and one ask per suit. A **lift** buys one card at the best ask, and a **hit** sells one card at the best bid. Any completed trade cancels every standing quote at the table, so a quote has a short window to find a counterparty.
 
-A very low bid is great if someone accepts it and useless if nobody does. A generous bid trades immediately but gives away value. Learning to trade means balancing price, chance of acceptance, inventory, time and information.
 
 Each agent observes its own hand, public cash and quotes, and public transfers. It also receives a Bayesian posterior over the twelve deck configurations, computed from the card counts it knows about. This gives every agent the same starting point for card inference. It does not treat opponents' strategic choices as evidence, and it does not reveal their hands.
 
@@ -81,30 +82,12 @@ $$
 
 As $\alpha \to 1$ this recovers softmax, and $\alpha = 2$ is sparsemax<d-cite key="martins2016softmax"></d-cite>. For any $\alpha > 1$, every action whose score falls below the threshold gets **exactly zero** probability. The actions left with positive probability form the policy's **support**, and the support can change from one state to the next.
 
-| Possible action in one situation | Illustrative dense policy | Illustrative sparse policy |
-| --- | ---: | ---: |
-| Bid near the estimated value | 60% | 65% |
-| Accept an attractive ask | 25% | 25% |
-| Wait | 10% | 10% |
-| Offer an implausibly low bid | 4% | 0% |
-| Buy at an unattractive price | 1% | 0% |
-
-*Invented distributions, shown to illustrate the distinction. They are not measured policies.*
-
-Both policies randomise. The difference is whether every legal action stays possible. This is not greedy action selection, and it is not rule enforcement: every agent is already masked from illegal actions, such as selling a card it does not hold. The question is whether to exclude actions that are legal but currently unattractive.
 
 
-### How far can regularisation pull a policy from optimal?
+### How far can regularisation pull a policy from optimal?<d-cite key="gaehtgens2024sparse"></d-cite>
 
-The toy example has a theoretical counterpart<d-cite key="gaehtgens2024sparse"></d-cite>. An entropy-regularised agent maximises reward plus an entropy bonus, so its optimal policy is generally not the reward-optimal one: it gives up some return in exchange for spread. How much it can give up is bounded by how much entropy is available to buy.
 
-Write the Tsallis negentropy as $\Omega_\alpha(\boldsymbol\pi) = \tfrac{1}{\alpha}\,\mathbb E_{a\sim\boldsymbol\pi}\big[\log_{2-\alpha} \pi_a\big]$, with $\log_\beta u = (u^{1-\beta}-1)/(1-\beta)$ and $\log_1 = \log$, so $\alpha = 1$ is Shannon. It is zero for a deterministic policy and most negative for the uniform one. With regularisation weight 1 and discount $\gamma$, the return $J$ of the optimal regularised policy $\pi^\star_\alpha$ satisfies
-
-$$
-J(\pi^\star) + \frac{1}{\alpha(1-\gamma)} \log_{2-\alpha}\!\Big(\frac{1}{|A|}\Big) \;\le\; J(\pi^\star_\alpha) \;\le\; J(\pi^\star),
-$$
-
-where $\pi^\star$ is the unregularised optimum. The width of this window is the worst-case **performance gap**:
+An entropy-regularised agent maximises reward plus an entropy bonus, so it can give up some return in exchange for spread. With regularisation weight 1 and discount $\gamma$, the worst-case **performance gap** between the optimal regularised policy and the unregularised optimum is
 
 $$
 U - L = \frac{1}{1-\gamma} \cdot
@@ -114,32 +97,16 @@ U - L = \frac{1}{1-\gamma} \cdot
 \end{cases}
 $$
 
-The two cases behave very differently as $\lvert A \rvert$ grows. Shannon entropy of the uniform distribution is $\log \lvert A \rvert$, which has no ceiling, so each extra action gives a softmax agent a little more entropy to collect by spreading mass, and the bound on what that can cost grows without limit. For $\alpha > 1$ the term $\lvert A \rvert^{1-\alpha}$ vanishes and the gap levels off at
-
-$$
-\lim_{|A|\to\infty} (U - L) = \frac{1}{\alpha(\alpha-1)(1-\gamma)} .
-$$
-
-Tsallis entropy with $\alpha > 1$ is bounded no matter how many actions there are, so past some point new actions buy almost no extra entropy and there is little reason to put mass on them. As $\alpha \to 1$ this limit itself diverges, which is the softmax case again.
-
-Per decision (dropping the $1/(1-\gamma)$ factor), at the sizes in our sweeps:
+Shannon entropy ($\log \lvert A \rvert$ at uniform) has no ceiling, so every extra action gives a softmax agent more entropy to collect by spreading mass, and the worst-case cost grows without limit. Tsallis entropy with $\alpha > 1$ is bounded, so the gap levels off at $1/\big(\alpha(\alpha-1)(1-\gamma)\big)$: past some point, new actions buy almost no entropy and there is little reason to put mass on them. Per decision, at the ends of our sweeps:
 
 | Actions $\lvert A \rvert$ | Softmax ($\alpha=1$) | Entmax-1.5 | Sparsemax ($\alpha=2$) |
 | ---: | ---: | ---: | ---: |
 | 97 | 4.57 | 1.20 | 0.49 |
-| 257 | 5.55 | 1.25 | 0.50 |
-| 497 | 6.21 | 1.27 | 0.50 |
-| 977 | 6.88 | 1.29 | 0.50 |
 | 1,937 | 7.57 | 1.30 | 0.50 |
 | $\to\infty$ | $\to\infty$ | 1.33 | 0.50 |
 
-Going from 97 to 1,937 actions, the softmax gap grows by 3.0 while entmax-1.5's grows by 0.1.
+This is a worst-case bound on an idealised MDP optimum, not a prediction for a PPO agent in a partially observed game against adapting opponents. Its scale is also set by the regularisation weight: shrinking a softmax agent's entropy weight like $1/\log \lvert A \rvert$ would keep its gap constant too, which is one reason the temperature-matched softmax controls below matter.
 
-This should be read with care. It is a worst-case bound, not a prediction of how much a given agent loses. It describes the exact optimum of a regularised, fully observed MDP, not a PPO agent in a partially observed game against adapting opponents. Our games are episodic with $\gamma = 1$, where the $1/(1-\gamma)$ factor becomes the number of decisions. And the scale is set by the regularisation weight, here fixed at 1: shrinking a softmax agent's entropy weight like $1/\log \lvert A \rvert$ would keep its gap constant too. That is one reason the temperature-matched softmax controls below matter.
-
-### Why trading makes it harder
-
-In a single-agent task the environment does not interpret your choices. In Figgie the other players can. If your quotes concentrate on buying clubs after your hand makes clubs look valuable, an observant opponent can infer that and raise their price. Sparse policies might help focus on profitable actions but they might also reveal information and make agents more exploitable. 
 
 ## Two ways to grow the action space
 
@@ -169,7 +136,6 @@ Decoys helps us understand how good the agents are at avoiding strictly dominate
 | Padding | 30 | \\$1.00 | 720 | 977 |
 | Padding | 30 | \\$1.00 | 1,680 | 1,937 |
 
-The two sweeps meet at the same sizes but ask different questions. At 497 actions, one market offers half-dollar prices and the other keeps dollar prices plus 240 costly distractions. Calling both "a larger action space" would hide the difference.
 
 ## Agents and training
 
@@ -227,7 +193,7 @@ Over 20,000 games, with one bot of each type and resolution order randomised per
 | MarketMaker | −8.02 | 12.8% |
 | Conservative | −11.54 | 10.3% |
 
-The ranking matches the one in Yang's CS224R project<d-cite key="yang2026figgie"></d-cite>. The numbers are not directly comparable, because that tournament also seated a Random agent whose losses become other bots' gains. Wealth is conserved at \\$1,400 per table, as it should be without decoys.
+The ranking matches the one in Yang's CS224R project<d-cite key="yang2026figgie"></d-cite>. The numbers are not directly comparable, because that tournament also seated a Random agent whose losses become other bots' gains.
 
 ### A learned softmax baseline
 
@@ -255,22 +221,21 @@ Two patterns are worth noting.
 - **Finer prices help both heads.** Profit rises from 10 to 120 price levels for softmax and entmax alike, so the extra resolution is useful, not just clutter.
 - **Win rate tells a different story from profit.** Against the mixed pool, softmax wins about 38–40% of games at every size. Entmax goes from 41% at 10 prices to 48% at 120 and about 53–54% with decoys. Against three Bayesian bots, softmax stays below par (about 18–20%) while entmax sits near or above it (23–32%).
 
-This is a comparison against fixed, rule-based opponents. It does not yet tell us *why* entmax does better. Softmax at temperature 1 may simply be too diffuse, and a cooler softmax could close much of the gap. Nor does it tell us how either policy holds up against opponents that adapt to it.
+This is a comparison against fixed, rule-based opponents. It does not yet tell us *why* entmax does better. 
 
 The rest of this post takes those questions in turn: whether the agent is filtering or just more decisive, whether a simpler concentration control explains the gap, what happens when the heads share a table, and how exploitable sparse policies are.
 
-## Which actions survive?
-
+## Sparsity in action
 
 The first comparison found that entmax-1.5 earned more than softmax against fixed bots at every market size. To understand that result, start with the ordinary market of 30 prices and no decoys. Of its 257 actions, only some are legal in a given state. We can count how many receive positive probability (**support**) and measure the probability of the single most likely action (**concentration**).
 
 | Policy | Mean legal choices | Choices with positive probability | Probability of favourite action |
 | --- | ---: | ---: | ---: |
-| Softmax | 157 | All legal choices | 7.3% |
+| Softmax | 157 | 157 (95 with p > 0.001 ) | 7.3% |
 | Entmax-1.5 | 167 | 33 | 25.4% |
 | Sparsemax | 166 | 31 | 27.3% |
 
-*Each entry is a median across five training seeds after averaging the final 20 logged updates within each seed. Each policy visits its own states, so even the number of legal choices differs. The softmax logger counts about 95 actions above probability 0.001. Its mathematical support includes the rest.*
+*Each entry is a median across five training seeds after averaging the final 20 logged updates within each seed. Each policy visits its own states, so even the number of legal choices differs.*
 
 The sparse heads both filter and concentrate. Entmax assigns zero probability to about four in five legal actions and still samples something other than its favourite roughly three quarters of the time. The rule that produces those zeros depends on the actions' learned scores<d-cite key="peters2019sparse"></d-cite>. It offers no guarantee about *which* actions survive. We can test how much the learned ranking matters by keeping softmax's ranking intact and changing how often it samples from the tail.
 
@@ -284,11 +249,11 @@ At 30 prices, cooling takes softmax from \\$10.2 to \\$12.5 per game against the
 
 Against the mixed table, all 35 paired differences are positive. Against three Bayesian bots, softmax pulls ahead at all three decoy sizes. The clearest remaining entmax advantages there come from finer prices, about \\$2.8 per game at 60 price levels and \\$4.5 at 120. The temperature was selected for the mixed table, so the Bayesian result required no extra tuning for that opponent.
 
-We also tried cutting off softmax's tail outright. Keeping the smallest set of actions containing 95% of its probability mass, then sampling from that set, closes roughly 10–30% of the original mixed-table gap. Training a softmax with truncation also leaves it behind plain entmax at all seven sizes. These controls show how much we can recover by changing action selection. They leave open how much of the remaining gap comes from the zeros themselves, the training gradients, or the different market situations the agents encountered while learning.
+We also tried cutting off softmax's tail outright. Keeping the smallest set of actions containing 95% of its probability mass, then sampling from that set, closes roughly 10–30% of the original mixed-table gap. Training a softmax with truncation also leaves it behind plain entmax at all seven sizes. 
 
 ## What happens at the same table?
 
-So far the learned traders have occupied separate games. Seat one entmax trader with three softmax traders and both sides now get to accept the other's prices. Then change the mix until the *softmax* trader is the one surrounded by rivals. We score each table by mean profit **per entmax seat minus mean profit per softmax seat**. This keeps a three-seat side from getting triple credit for its trades.
+So far the learned traders have occupied separate games. Seat one entmax trader with three softmax traders and both sides now get to accept the other's prices. Then change the mix until the *softmax* trader is the one surrounded by rivals. We score each table by mean profit **per entmax seat minus mean profit per softmax seat**. 
 
 | Market | 1 entmax seat, 3 softmax | 2 of each | 3 entmax seats, 1 softmax |
 | --- | ---: | ---: | ---: |
@@ -300,19 +265,15 @@ So far the learned traders have occupied separate games. Seat one entmax trader 
 
 *Median per-seat gaps in dollars per game over five seeds, plain entmax-1.5 at $T=1$ against softmax at $T=0.35$. A positive gap counts as one positive seed × table result, regardless of how many individual games either policy won.*
 
-Across the four price grids without decoys, entmax leads in **60 of 60** comparisons (four grids × three seat mixes × five seeds). Adding 720 decoys produces a striking reversal. A lone entmax seat is close to level at the median. Put two copies at the table and each trails a softmax seat by \\$12. The training seed matters here too. At that two-against-two table the 95% seed-bootstrap interval runs from −\\$17.3 to +\\$13.1.
+Without decoys, entmax leads in **60 of 60** comparisons (four grids × three seat mixes × five seeds). Decoys reverse this: with 720 of them, two entmax seats each trail softmax by \\$12, because entmax keeps some probability on decoys and burns money on them. In the losing cases, that burn accounts for 34–75% of entmax's per-seat loss.
 
-Where does the money go? Separate replays with both policies at $T=1$ let us account for the initial deal, gains on trades at realised card payouts, the change in majority bonus, and dollars burned. In the ordinary 30-price market, a lone entmax seat gains a median **\\$16.8 in majority bonus** while giving up **\\$5.9 on trades**. Paying more than a goal card's eventual \\$10 payout can make sense if that card also tips the majority.
-
-With three entmax seats and decoys, the lone softmax trader finds quotes worth accepting. In the six seed-and-size cases where the entmax seats lose, softmax gains \\$17–26 per game from taking quotes, valued at the cards' realised payouts. Entmax's own decoy burn accounts for 34–75% of its per-seat loss in those cases. Those dollars leave the table entirely. Softmax collects its trading gains when it accepts a price posted by another player.
+Entmax fares best when outnumbered. A lone entmax seat is close to level even with 720 decoys, with three entmax seats, the roles flip: the lone softmax trader gains \\$17–26 per game by accepting the quotes entmax posts.
 
 ## Teaching the agent to leave a dollar alone
 
-A decoy is always worse than waiting. Why would a policy that can discard most actions spend money on one? The Bayesian demonstrator never picks a decoy. During behaviour cloning, once a sparse head assigns an undemonstrated action zero probability, the imitation loss supplies no further direct gradient on that score<d-cite key="blondel2020learning"></d-cite>. In one reduced-scale replay, excluded decoys finished imitation only 0.17 logits below the threshold for entering support. Subsequent updates to the shared network could bring them back. That distance comes from a single pilot. Swapping entropy coefficients in the full runs did little to change the burn.
+A decoy is always worse than waiting, and the Bayesian demonstrator never picks one. Yet during behaviour cloning, once a sparse head assigns an undemonstrated action zero probability, the imitation loss supplies no further direct gradient on that score<d-cite key="blondel2020learning"></d-cite>. In one reduced-scale replay, excluded decoys finished imitation only 0.17 logits below the threshold for entering support, so later updates to the shared network could bring them back.
 
-Our first fix pushed every currently excluded action farther below the threshold during imitation. It eliminated entmax's decoy burn and also taught the trader to stop accepting offers. Even with *zero* decoys, its mixed-table profit went from +\\$17.3 to **−\\$13.1**. An action the policy excludes today can be the expert's best move in another hand.
-
-The revised loss applies that extra margin only to actions the expert **never took anywhere in the demonstrations**. It needs no decoy labels. The contrast is easiest to see by seating four copies of one frozen policy together. With no outside trader to win money from, the four players' combined loss is exactly the amount they burn.
+The fix adds an extra margin that pushes down actions the expert **never took anywhere in the demonstrations**, and only those. It needs no decoy labels. The contrast is easiest to see by seating four copies of one frozen policy together. With no outside trader to win money from, the four players' combined loss is exactly the amount they burn.
 
 | Dollars destroyed per four-copy table per game | 240 decoys | 720 decoys | 1,680 decoys |
 | --- | ---: | ---: | ---: |
@@ -322,11 +283,11 @@ The revised loss applies that extra margin only to actions the expert **never to
 
 *Five-seed medians rounded to the nearest tenth. These are table totals in frozen-policy evaluation. Training logs include changing opponents and give different burn figures.*
 
-With the revised warm start, entmax leads cooled softmax in **45 of 45** padded seed × table comparisons, up from **23 of 45**. There is a trade-off elsewhere. Against the mixed bot table the revised policy earns about \\$2–3 less per game at 240 and 720 decoys, where plain entmax had earned more than it did in the unpadded market. Why adding useless buttons raised that particular score remains open.
+With the revised warm start, entmax leads cooled softmax in **45 of 45** padded seed × table comparisons, up from **23 of 45**. There is a trade-off elsewhere. Against the mixed bot table the revised policy earns about \\$2–3 less per game at 240 and 720 decoys, where plain entmax had earned more than it did in the unpadded market. 
 
 ## What can an opponent learn to take?
 
-Apart from evaluating their performance, we want to understand what happens when we train an attacker against a specific agent, i.e how exploitable is the learned strategy. For each plain target seed we try four attackers, including one initialised from the target, and keep the highest measured profit. The table reports the median of those five seed-level best scores.
+Beyond raw performance, we want to know how exploitable each learned strategy is. We train an attacker in one seat against three frozen copies of a target. For each target seed we try four attackers, including one initialised from the target, and keep the highest measured profit. The table reports the median of those five seed-level best scores.
 
 | Frozen target market | Attacker vs softmax | Attacker vs entmax-1.5 | Attacker vs sparsemax |
 | --- | ---: | ---: | ---: |
@@ -334,35 +295,30 @@ Apart from evaluating their performance, we want to understand what happens when
 | 120 prices | +\\$6.7 | +\\$20.0 | +\\$4.3 |
 | 30 prices + 1,680 decoys | +\\$8.6 | +\\$21.4 | +\\$5.0 |
 
-*Dollars earned by the single attacker per game. A higher score means a more profitable response was found. Each measured return has sampling error, and selecting the highest of several estimates can push it upwards.*
 
-The earlier softmax attacker earned about zero against softmax at 30 prices. A stronger response earned \\$13.7 against the same target family. An attacker's achievable expected profit gives a lower bound on what an optimal response could earn, so a weak training run can make a target look unusually safe. The \\$5.0 figure for padded sparsemax deserves particular care. Its warm-started attacker finished below zero against three of five target seeds.
 
-The sharpest test of the decoy explanation is the repaired entmax policy. At 1,680 decoys its four-copy table burns only \\$0.3, yet the best measured response among three attacker variants still earns **\\$19.4 per game** (95% seed-bootstrap interval \\$15.9–25.0). An opponent can make good money at this table even after the conspicuous dollar-burning mistake has largely disappeared.
+Entmax is the most exploitable head at every size. That holds even for the repaired entmax policy. At 1,680 decoys its four-copy table burns only \\$0.3, yet the best of three attackers still earns **\\$19.4 per game** (95% seed-bootstrap interval \\$15.9–25.0).
+
+### Does the exploit survive a mixed table?
+
+An attacker trained against three copies of one policy rarely meets that table in practice. So we move each seed's attacker (the one with the best three-copy score) to two mixed tables: one with all three plain policies, and one with its target, a Bayesian bot and a FairValue bot.
+
+| Frozen target market | Attacker vs softmax | Attacker vs entmax-1.5 | Attacker vs sparsemax |
+| --- | ---: | ---: | ---: |
+| 30 prices | +\\$2.9 / +\\$5.9 | +\\$18.2 / +\\$10.9 | +\\$11.1 / +\\$8.3 |
+| 120 prices | +\\$0.3 / +\\$3.7 | +\\$11.3 / +\\$8.3 | +\\$1.5 / +\\$2.2 |
+| 30 prices + 1,680 decoys | −\\$1.4 / +\\$0.9 | +\\$9.6 / −\\$4.1 | +\\$5.1 / −\\$8.1 |
+
+*Attacker profit per game: among the three policies / beside its target and two bots. Medians over five seeds, 10,000 games each. *
+
+The entmax attacker transfers best ,among the three policies it tops the table at every size, earning \\$15–24 more per game than a Bayesian bot in the same seat. Its target is not always the main source of that money. Softmax, already the weakest seat, usually loses as much or more.
 
 ## Why did self-play leave these holes?
 
-Every policy above already trained against earlier versions of itself. In each game, 30% of opponent seats came from a five-bot zoo and 70% from a ring of sixteen frozen snapshots. The snapshots all belonged to one training lineage and used that learner's head. An entmax learner could improve against its own past without ever meeting a learned softmax trader.
 
-The next experiments ask whether the remaining weakness comes from cycling, too little training, or the opponents in that ring. All use **30 prices and zero decoys**. They therefore test the vulnerability that survives even when burning money is impossible. The predictions were recorded before the corresponding phases ran.
+The next experiments ask whether the remaining weakness comes from too little training or from the opponents in that ring. All use **30 prices and zero decoys**, so they test the vulnerability that survives even when burning money is impossible.
 
-First, take ten checkpoints along each lineage and play every pair at a two-against-two table. Among pairs whose payoff gap exceeds two standard errors, the later checkpoint wins 650 of 675 comparisons at 50M steps and 667 of 675 at 100M. None of roughly 3,300 fully decided triples forms a cycle. The policies keep improving against their predecessors. The predicted rock-paper-scissors pattern fails to appear in these sampled checkpoints.
-
-Attacker profit also falls sharply early in training. For entmax it drops from about \\$107 at update 50 to \\$18 at the 50M endpoint. That suggests a simple possibility. Perhaps the original budget stopped entmax just before it became difficult to exploit.
-
-| Target | Best attacker at 50M steps | Best attacker at 100M steps |
-| --- | ---: | ---: |
-| Softmax | \\$8.4 | \\$8.5 |
-| Entmax-1.5 | \\$17.8 | \\$19.5 |
-| Sparsemax | \\$14.6 | \\$12.0 |
-
-*Median attacker profit per game over three target seeds, using the best of two attackers in both columns. These runs have narrower attacker coverage than the earlier four-attacker comparison. The 100M runs also stretch the learning-rate schedule and change the fraction of training history retained by the snapshot ring.*
-
-Twice the training leaves entmax's final attacker profit close to its earlier level. The difference between entmax and softmax remains \\$11.0 per game, with a 95% seed-bootstrap interval of \\$3.7–13.5. More training does help all three heads against the all-Bayesian table, by about \\$3–5 per game, but it does little to close this measured vulnerability.
-
-One long entmax run illustrates why those outcomes can diverge. Its mixed-bot return jumps from roughly \\$19 to \\$40 as its offers start being accepted much more often. At a checkpoint near the emergence of that behaviour, a warm-started attacker earns about **\\$200 per game**. By the final checkpoint that attacker gain is back near \\$20. A policy can discover a lucrative way to trade with the bots while briefly becoming much easier for a trained rival to exploit.
-
-Both bot evaluations use bot types present during training. Their tables provide controlled comparisons, but generalisation to unseen learned opponents needs its own measurement.
+More training does not make entmax harder to exploit. Doubling the budget from 50M to 100M steps moves its best attacker's profit from \\$17.8 to \\$19.5 per game. Its gap over softmax stays at \\$11.0 (95% seed-bootstrap interval \\$3.7–13.5). These figures use three target seeds and the best of two attackers. The extra steps add \\$3–5 per game against the all-Bayesian table for every head, but the exploitability remains.
 
 ## Learning against a shared league
 
@@ -381,8 +337,6 @@ The three conditions received the same four attacker variants. This comparison u
 Randomising the snapshot head raises the median attacker profit for every arm. Sparsemax's increase of \\$6.3 has a 95% seed-bootstrap interval of \\$0.3–12.3. The corresponding changes for softmax and entmax have intervals spanning zero. Altering how existing weights are read provides little evidence of the strategic diversity we wanted.
 
 The shared league produces a different result. Sparsemax's best observed attacker gain falls by **\\$9.2**, with an interval of \\$5.1–12.6 for the reduction. Entmax improves by only \\$2.7, with an interval spanning zero. Its gap with softmax narrows largely because the softmax median rises. The intervention designed to explain entmax's weakness has its clearest effect on sparsemax.
-
-Attacker choice remains consequential. Across these conditions, the entmax attacker is best against softmax in 14 of 15 target cases. The two-attacker experiments above omit that attacker and understate softmax's measured vulnerability. The 100M results establish what those two attackers found. Matching the full four-attacker coverage would make the training-budget comparison more informative.
 
 ## Does the league preserve the trading advantage?
 
@@ -412,7 +366,6 @@ Cooling narrows the gaps, but entmax still leads in all 25 seed-pair averages an
 
 Between the sparse heads, entmax wins 21 of 25 seed pairs and leads by \\$2.4, with an interval of \\$0.6–4.4. Yet its best observed attacker earns \\$17.5, compared with \\$4.1 against league sparsemax. A policy's success against these learned traders and the opportunity available to a specialised attacker give different rankings.
 
-The \\$4.1 result is promising, and also a reason to strengthen the attacks. Both softmax-initialised attackers lose money against league sparsemax at the median. Larger attacker budgets could reveal opportunities they missed. These experiments establish a reduction in the best profit found under the tested attack procedure. Exact exploitability remains unknown.
 
 ## Conclusion
 
@@ -423,8 +376,6 @@ We asked whether sparse policies can help RL agents perform better in incomplete
 **Sparsemax is the least exploitable.** In the first attack comparison, the best attacker against sparsemax earned less than the best attacker against softmax in every market we tried: \\$13.1 against \\$13.7 at 30 prices, \\$4.3 against \\$6.7 at 120 prices and \\$5.0 against \\$8.6 with 1,680 decoys. The shared league widens that margin. League sparsemax gives its best observed attacker \\$4.1 per game, against \\$16.3 for league softmax and \\$17.5 for league entmax, and it is the only head where the league produced a clearly resolved reduction. That robustness does not come at the cost of trading: league sparsemax still beats league softmax by \\$10.9 per seat, or \\$6.2 with softmax cooled, leading in 24 of 25 seed pairs.
 
 Together these results point to the same mechanism from two sides. Ruling actions out lets a policy concentrate on the trades that matter, which is where entmax's edge comes from. Pushing sparsity further, and training against a diverse league, leaves an opponent fewer stray quotes to pick off, which is where sparsemax's robustness comes from. The exponent $\alpha$ moves a policy between those two ends, and both ends beat a dense policy.
-
-The benefits come with conditions. Sparse heads need a warm start that does not leave undemonstrated actions just below the support threshold, or they burn money on actions that are never worth taking. Entmax's best attackers still find about \\$17–20 per game, and more self-play alone does not remove that. Attacker profit is a lower bound, so the \\$4.1 figure for sparsemax shows that our attacks found little, not that little is there. Within those limits, sparse policies gave us both the best trader and the most robust one in this market.
 
 ## Related work
 
