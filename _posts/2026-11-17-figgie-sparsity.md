@@ -31,6 +31,8 @@ toc:
 
 > **TL;DR.** Softmax gives every legal action some probability, while sparse probability maps can return exact  *zeros*. We test whether that helps a reinforcement-learning agent trade in Figgie, a four-player card market with hidden information, as the action space grows from 97 to 1,937 actions. Against fixed rule-based opponents, entmax-1.5 earns more than softmax at every market size evaluated, and about \\$4–7 more per game than a cooled softmax against our mixed bot table. Trained attackers still find about \\$19 per game against entmax, and doubling training doesn't fix that. A shared league of policies with all three heads cuts sparsemax's best observed attacker gain to \\$4.1 while entmax keeps its trading lead. Sparse heads win at both ends: entmax is the strongest player trained and sparsemax the hardest to exploit.
 
+<a href="https://github.com/goncaloduarte125/figgie.rl" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i> goncaloduarte125/figgie.rl</a>
+
 ## Learning what not to do
 
 Figgie is a card game created by Jane Street to teach trading fundamentals, with an emphasis on negotiation. Traders need to balance trading hedge with acceptance probability and come up with trades that benefit both the buyer and the seller. A generous bid trades immediately but gives away value. Learning to trade means balancing price, chance of acceptance, inventory, time and information.
